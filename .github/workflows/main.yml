@@ -14,19 +14,30 @@ jobs:
     - uses: actions/checkout@v3
     - name: Setup Visual Studio
       uses: microsoft/setup-msbuild@v1.1
+    - name: Download libusbK
+      run: |
+        Invoke-WebRequest -Uri "https://github.com/libusb/libusb/releases/download/v1.0.26/libusb-1.0.26-win64.7z" -OutFile "libusb-1.0.26-win64.7z"
+        7z x libusb-1.0.26-win64.7z -o"libusbK"
     - name: Create Build Directory
       run: mkdir build
     - name: Configure CMake
-      run: cmake .. -G "Visual Studio 17 2022" -DLIBUSB_INCLUDE_DIR="C:/libusbK/include" -DLIBUSB_LIBRARY="C:/libusbK/lib/x64/libusbK.lib"
+      run: cmake .. -G "Visual Studio 17 2022" -DLIBUSB_INCLUDE_DIR="./libusbK/include" -DLIBUSB_LIBRARY="./libusbK/lib/x64/libusbK.lib"
       working-directory: ./build
     - name: Build
       run: cmake --build . --config Release
       working-directory: ./build
+    - name: Copy libusb dll
+      run: Copy-Item -Path "./libusbK/lib/x64/libusbK.dll" -Destination "./build/Release/"
     - name: Upload Artifact
       uses: actions/upload-artifact@v3
       with:
         name: windows-build
         path: ./build/Release/pshddtools.exe
+    - name: Upload libusb dll
+      uses: actions/upload-artifact@v3
+      with:
+        name: windows-libusb-dll
+        path: ./build/Release/libusbK.dll
   build-linux:
     runs-on: ubuntu-latest
 
