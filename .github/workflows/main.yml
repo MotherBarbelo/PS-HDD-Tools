@@ -16,8 +16,13 @@ jobs:
       uses: microsoft/setup-msbuild@v1.1
     - name: Download libusbK
       run: |
-        Invoke-WebRequest -Uri "https://github.com/libusb/libusb/releases/download/v1.0.26/libusb-1.0.26-win64.7z" -OutFile "libusb-1.0.26-win64.7z"
-        7z x libusb-1.0.26-win64.7z -o"libusbK"
+        try {
+          Invoke-WebRequest -Uri "https://github.com/libusb/libusb/releases/download/v1.0.26/libusb-1.0.26-binaries.7z" -OutFile "libusb-1.0.26-binaries.7z" -ErrorAction Stop
+          7z x libusb-1.0.26-binaries.7z -o"libusbK"
+        } catch {
+          Write-Error $_
+          exit 1
+        }
     - name: Create Build Directory
       run: mkdir build
     - name: Configure CMake
@@ -27,7 +32,7 @@ jobs:
       run: cmake --build . --config Release
       working-directory: ./build
     - name: Copy libusb dll
-      run: Copy-Item -Path "./libusbK/lib/x64/libusbK.dll" -Destination "./build/Release/"
+      run: Copy-Item -Path "./libusbK/lib/x64/libusb-1.0.dll" -Destination "./build/Release/"
     - name: Upload Artifact
       uses: actions/upload-artifact@6673cd052c4cd6fcf4b4e6e60ea986c889389535
       with:
@@ -37,7 +42,7 @@ jobs:
       uses: actions/upload-artifact@6673cd052c4cd6fcf4b4e6e60ea986c889389535
       with:
         name: windows-libusb-dll
-        path: ./build/Release/libusbK.dll
+        path: ./build/Release/libusb-1.0.dll
   build-linux:
     runs-on: ubuntu-latest
 
