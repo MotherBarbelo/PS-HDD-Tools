@@ -29,12 +29,12 @@ jobs:
     - name: Copy libusb dll
       run: Copy-Item -Path "./libusbK/lib/x64/libusbK.dll" -Destination "./build/Release/"
     - name: Upload Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@6673cd052c4cd6fcf4b4e6e60ea986c889389535
       with:
         name: windows-build
         path: ./build/Release/pshddtools.exe
     - name: Upload libusb dll
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@6673cd052c4cd6fcf4b4e6e60ea986c889389535
       with:
         name: windows-libusb-dll
         path: ./build/Release/libusbK.dll
