@@ -12,62 +12,71 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+
     - name: Setup Visual Studio
       uses: microsoft/setup-msbuild@v1.1
+
     - name: Download Qt Online Installer
       run: |
         Invoke-WebRequest -Uri "https://download.qt.io/official_releases/online_installers/qt-unified-windows-x86-online.exe" -OutFile "qt-installer.exe"
         Start-Process -Wait -FilePath "qt-installer.exe" -ArgumentList "--mirror", "https://download.qt.io", "--verbose", "--accept-licenses", "--default-answer", "--install-prefix", "C:\Qt", "--install-packages", "qt.qt5.5152.win64_msvc2019_64"
+
     - name: Download libusbK
       run: |
-        try {
-          Invoke-WebRequest -Uri "https://github.com/libusb/libusb/releases/download/v1.0.26/libusb-1.0.26-binaries.7z" -OutFile "libusb-1.0.26-binaries.7z" -ErrorAction Stop
-          7z x libusb-1.0.26-binaries.7z -o"libusbK"
-        } catch {
-          Write-Error $_
-          exit 1
-        }
+        Invoke-WebRequest -Uri "https://github.com/libusb/libusb/releases/download/v1.0.26/libusb-1.0.26-binaries.7z" -OutFile "libusb.7z"
+        7z x libusb.7z -o"libusbK"
+
     - name: Create Build Directory
       run: mkdir build
+
     - name: Configure CMake
       run: cmake .. -G "Visual Studio 17 2022" -DCMAKE_PREFIX_PATH="C:\Qt\5.15.2\lib\cmake" -DLIBUSB_INCLUDE_DIR="./libusbK/include" -DLIBUSB_LIBRARY="./libusbK/lib/x64/libusbK.lib"
       working-directory: ./build
+
     - name: Build
       run: cmake --build . --config Release
       working-directory: ./build
+
     - name: Copy libusb dll
       run: Copy-Item -Path "./libusbK/lib/x64/libusb-1.0.dll" -Destination "./build/Release/"
-    - name: Upload Artifact
-      uses: actions/upload-file-to-gist@v1
+
+    - name: Upload Windows Build to Gist
+      uses: exuanbo/actions-upload-to-gist@v1
       with:
-        file_paths: ./build/Release/pshddtools.exe
-        gist_name: windows-build-pshddtools
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-    - name: Upload libusb dll
-      uses: actions/upload-file-to-gist@v1
+        token: ${{ secrets.GIST_TOKEN }}
+        gist_id: ${{ secrets.WIN_GIST_ID }}
+        file_path: ./build/Release/pshddtools.exe
+
+    - name: Upload Windows libusb DLL to Gist
+      uses: exuanbo/actions-upload-to-gist@v1
       with:
-        file_paths: ./build/Release/libusb-1.0.dll
-        gist_name: windows-libusb-dll
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.GIST_TOKEN }}
+        gist_id: ${{ secrets.WIN_GIST_ID }}
+        file_path: ./build/Release/libusb-1.0.dll
 
   build-linux:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
+
     - name: Install Dependencies
-      run: sudo apt-get update && sudo apt-get install cmake libusb-1.0-0-dev
+      run: sudo apt-get update && sudo apt-get install -y cmake libusb-1.0-0-dev
+
     - name: Create Build Directory
       run: mkdir build
+
     - name: Configure CMake
       run: cmake ..
       working-directory: ./build
+
     - name: Build
       run: make
       working-directory: ./build
-    - name: Upload Artifact
-      uses: actions/upload-file-to-gist@v1
+
+    - name: Upload Linux Build to Gist
+      uses: exuanbo/actions-upload-to-gist@v1
       with:
-        file_paths: ./build/pshddtools
-        gist_name: linux-build-pshddtools
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.GIST_TOKEN }}
+        gist_id: ${{ secrets.LINUX_GIST_ID }}
+        file_path: ./build/pshddtools
